@@ -78,6 +78,14 @@ def get_line_score(score_list: list, length: int) -> int:
     return 0
 
 
+all_cards = []
+for i in [8, 4, 3]:
+    for j in [9, 5, 1]:
+        for k in [7, 6, 2]:
+            all_cards.append(Card(i, j, k))
+all_cards.append(Card(-1, -1, -1))
+
+
 class Board:
 
     def __init__(self) -> None:
