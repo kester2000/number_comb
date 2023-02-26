@@ -32,17 +32,21 @@ from board import *
 #             card_list.append(Piece(a, b, c))
 
 
-card_list = Board.get_card('22073789477')
-print(len(card_list))
+# card_list = Board.get_card('22073789477')
+# print(len(card_list))
 
-perms = [
-    (0, [4,8,6,10,13,5,16,7,2,12,3,1,9,18,19,14,15,17,0,11]),
-]
+# perms = [
+#     (0, [4,8,6,10,13,5,16,7,2,12,3,1,9,18,19,14,15,17,0,11]),
+# ]
 
-# print(len(perms))
-for perm in perms:
-    board = Board()
-    for card, move in zip(card_list, perm[1]):
-        if move != -1:
-            board.do_move(card, move)
-    board.show(str(board.get_score()), str(perm[1]))
+# # print(len(perms))
+# for perm in perms:
+#     board = Board()
+#     for card, move in zip(card_list, perm[1]):
+#         if move != -1:
+#             board.do_move(card, move)
+#     board.show(str(board.get_score()), str(perm[1]))
+
+c1 = Card(-1, -1, -1)
+c2 = Card(-1, -1, -1)
+print(c1 == c2)

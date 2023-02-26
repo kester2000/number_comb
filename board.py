@@ -32,6 +32,12 @@ class Card:
                 'resource/card_' + str(self.num[0]) + str(self.num[1]) + str(self.num[2]) + '.png')
         return image
 
+    def __eq__(self, b):
+        return self.num == b.num
+
+    def __str__(self):
+        return str(self.num)
+
 
 def location_to_move(pair: tuple) -> int:
     if len(pair) != 2:
@@ -82,6 +88,16 @@ class Board:
                 if MP[i][j] == -1:
                     self.matrix[i][j] = Card(-1, -1, -1)
         self.bin = Card()
+
+    def get_actions(self):
+        ret = []
+        if self.bin.is_empty():
+            ret.append(0)
+        for i in range(1, 20):
+            x, y = move_to_location(i)
+            if self.matrix[x][y].is_empty():
+                ret.append(i)
+        return ret
 
     # 1  4  8  *  *
     # 2  5  9  13 *
@@ -195,7 +211,7 @@ class Board:
         draw.text((10, 32), perm, (0, 0, 0))
         image3.show()
 
-    def get_card(seed:str) -> list[Card]:
+    def get_card(seed: str) -> list[Card]:
         ret = subprocess.Popen(
             r"source\CombSeedFinder.exe",
             stdout=subprocess.PIPE,
