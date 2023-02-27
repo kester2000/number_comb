@@ -216,11 +216,9 @@ class Board:
             score_list2 = [self.matrix[x][k].num[2] for k in range(5)]
             potential += get_line_potential_all(score_list2, 5 - abs(x - 2))
 
-        potential += 30 if self.bin.is_empty() else 0
-
         return potential
 
-    def show(self, title, perm) -> None:
+    def show(self, title='', sub_title='') -> None:
         image = Image.new('RGB', (7 * 64, 7 * 64), (255, 255, 255))
         walls = [[[0] * 3 for i in range(9)] for j in range(9)]
 
@@ -276,7 +274,7 @@ class Board:
 
         draw = ImageDraw.Draw(image3)
         draw.text((10, 20), title, (0, 0, 0))
-        draw.text((10, 32), perm, (0, 0, 0))
+        draw.text((10, 32), sub_title, (0, 0, 0))
         image3.show()
 
     def get_card(seed: str):

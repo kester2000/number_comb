@@ -58,3 +58,9 @@ from board import *
 #     print(card)
 
 # print(sum(card.get_score() for card in all_cards)/len(all_cards))
+
+board = Board()
+card = Card(8, 9, 7)
+board.do_move(card, 1)
+board.show()
+print(board.get_potential())

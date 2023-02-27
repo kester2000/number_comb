@@ -4,8 +4,8 @@ import numpy as np
 from board import *
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = torch.device('cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 
 
 class QNetwork(nn.Module):
@@ -92,4 +92,4 @@ def get_state(board: Board, card: Card):
 
 
 def get_reward(board: Board):
-    return board.get_score() + board.get_potential() * 0.5
+    return board.get_score() + (board.get_potential() - board.get_score() + board.bin.get_score()) * 0.2 + (15 if board.bin.is_empty() else 0)
