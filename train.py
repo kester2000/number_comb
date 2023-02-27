@@ -34,21 +34,19 @@ while True:
     q_values = q_network(state)
     action = epsilon_greedy(q_values, board.get_actions(), EPSILON)
     # Repeat until the end of the game
-    while True:
+    while action:
         # Execute the action and observe the next state and reward
         board.do_move(cards[0], action)
         cards.pop(0)
-        if len(board.get_actions()) == 0:
-            break
-        reward = board.get_score()
+        reward = get_reward(board)
         q_values = q_network(state)
         q_value = q_values[action]
         next_state = get_state(board, cards[0])
         next_q_values = q_network(next_state)
         next_action = epsilon_greedy(
-            next_q_values, board.get_actions(), EPSILON)
-        next_q_value = next_q_values[next_action]
-        target_q_value = reward + GAMMA * next_q_value
+            next_q_values, board.get_actions(), EPSILON) if board.get_actions() else None
+        next_q_value = next_q_values[next_action] if next_action else None
+        target_q_value = reward + GAMMA * next_q_value if next_q_value else reward
         loss = criterion(q_value, target_q_value)
         optimizer.zero_grad()
         loss.backward()

@@ -103,9 +103,14 @@ def get_line_score(score_list: list) -> int:
     return 0
 
 
+def get_line_potential_all(score_list: list, length: int) -> int:
+    # 得到一行潜力，score_list为该行，length为有效长度
+    return get_line_potential(score_list) * length
+
+
 def get_line_score_all(score_list: list, length: int) -> int:
     # 得到一行分数，score_list为该行，length为有效长度
-    return get_line_score(score_list)*length
+    return get_line_score(score_list) * length
 
 
 all_cards = []
@@ -189,6 +194,31 @@ class Board:
         score += self.bin.get_score()
 
         return score
+
+    # 获得潜力
+    def get_potential(self) -> int:
+        potential = 0
+
+        # 往右下
+        for x, y in [[0, 2], [0, 1], [0, 0], [1, 0], [2, 0]]:
+            mx = max(x, y)
+            score_list0 = [self.matrix[x + k][y + k].num[0]
+                           for k in range(5 - mx)]
+            potential += get_line_potential_all(score_list0, 5 - mx)
+
+        # 往下
+        for y in range(5):
+            score_list1 = [self.matrix[k][y].num[1] for k in range(5)]
+            potential += get_line_potential_all(score_list1, 5 - abs(y - 2))
+
+        # 往右
+        for x in range(5):
+            score_list2 = [self.matrix[x][k].num[2] for k in range(5)]
+            potential += get_line_potential_all(score_list2, 5 - abs(x - 2))
+
+        potential += 30 if self.bin.is_empty() else 0
+
+        return potential
 
     def show(self, title, perm) -> None:
         image = Image.new('RGB', (7 * 64, 7 * 64), (255, 255, 255))

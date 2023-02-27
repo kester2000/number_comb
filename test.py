@@ -57,6 +57,4 @@ from board import *
 # for card in cards:
 #     print(card)
 
-state = []
-state.extend([1 if 1 > 0 else 0] * 10)
-print(state)
+# print(sum(card.get_score() for card in all_cards)/len(all_cards))

@@ -88,3 +88,7 @@ def get_state(board: Board, card: Card):
 
     state_tensor = torch.tensor(state).float().to(device)
     return state_tensor
+
+
+def get_reward(board: Board):
+    return board.get_score() + board.get_potential() * 0.5
