@@ -47,6 +47,11 @@ from board import *
 #             board.do_move(card, move)
 #     board.show(str(board.get_score()), str(perm[1]))
 
-c1 = Card(-1, -1, -1)
-c2 = Card(-1, -1, -1)
-print(c1 == c2)
+# c1 = Card(-1, -1, -1)
+# c2 = Card(-1, -1, -1)
+# print(c1 == c2)
+
+cards = Board.get_random_cards()
+print(len(cards))
+for card in cards:
+    print(card)

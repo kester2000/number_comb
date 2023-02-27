@@ -27,7 +27,8 @@ while True:
     # Initialize the state and action
     board = Board()
     seed = str(time.time())
-    cards = Board.get_card(seed)
+    # cards = Board.get_card(seed)
+    cards = Board.get_random_cards()
     state = get_state(board, cards[0])
     q_values = q_network(state)
     action = epsilon_greedy(q_values, board.get_actions(), EPSILON)
@@ -62,6 +63,3 @@ while True:
     if episode % 100 == 0:
         with open('q_network_params.pkl', 'wb') as f:
             pickle.dump(q_network.state_dict(), f)
-
-with open('q_network_params.pkl', 'wb') as f:
-    pickle.dump(q_network.state_dict(), f)

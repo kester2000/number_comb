@@ -1,5 +1,6 @@
-from PIL import Image, ImageDraw
+import random
 import subprocess
+from PIL import Image, ImageDraw
 
 MP = [[1, 4, 8, -1, -1], [2, 5, 9, 13, -1], [3, 6, 10, 14, 17],
       [-1, 7, 11, 15, 18], [-1, -1, 12, 16, 19]]
@@ -219,7 +220,7 @@ class Board:
         draw.text((10, 32), perm, (0, 0, 0))
         image3.show()
 
-    def get_card(seed: str) -> list[Card]:
+    def get_card(seed: str):
         ret = subprocess.Popen(
             r"source\CombSeedFinder.exe",
             stdout=subprocess.PIPE,
@@ -239,6 +240,17 @@ class Board:
             temp = [int(i) for i in card_str.split(',')]
             cards.append(Card(temp[0], temp[1], temp[2]))
         return cards
+
+    def get_random_cards():
+        cards = []
+        for card in all_cards:
+            cards.append(card)
+            cards.append(card)
+        random.shuffle(cards)
+        if any(card.is_wild() for card in cards[:20]):
+            return cards[:20]
+        else:
+            return cards[:20]
 
 # # 1  4  8  *  *
 # # 2  5  9  13 *
