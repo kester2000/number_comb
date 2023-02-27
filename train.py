@@ -21,13 +21,14 @@ except FileNotFoundError:
 # Define the loss function and optimizer
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(q_network.parameters(), lr=LEARNING_RATE)
+seed = 'unknown'
 
 # Run the SARSA algorithm
 while True:
     episode += 1
     # Initialize the state and action
     board = Board()
-    seed = str(time.time())
+    # seed = str(time.time())
     # cards = Board.get_card(seed)
     cards = Board.get_random_cards()
     state = get_state(board, cards[0])
@@ -45,10 +46,9 @@ while True:
             next_state = get_state(board, cards[0])
             next_q_values = q_network(next_state)
             next_action = epsilon_greedy(
-                next_q_values, board.get_actions(), EPSILON) if board.get_actions() else None
-            next_q_value = next_q_values[next_action] if 0 <= next_action <= 19 else None
-            target_q_value = (
-                reward + GAMMA * next_q_value) if next_q_value else reward
+                next_q_values, board.get_actions(), EPSILON)
+            next_q_value = next_q_values[next_action]
+            target_q_value = reward + GAMMA * next_q_value
         else:
             target_q_value = torch.tensor(reward)
         loss = criterion(q_value, target_q_value)
@@ -58,7 +58,6 @@ while True:
         # Transition to the next state and action
         state = next_state
         action = next_action
-
         if len(cards) == 0:
             break
 
