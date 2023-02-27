@@ -57,8 +57,32 @@ def move_to_location(move: int) -> tuple:
     return MOVE[move]
 
 
-# 得到一行分数，score_list为该行，length为有效长度
-def get_line_score(score_list: list, length: int) -> int:
+def get_line_potential(score_list: list) -> int:
+    # 得到一行潜力，score_list为该行
+
+    # num为得到第一个非癞子非空
+    num = -1
+    for i in score_list:
+        if i != -1 and i != 0:
+            num = i
+            break
+
+    if num == -1:
+        return 10
+
+    # 转化所有癞子
+    change_list = [num if x == -1 else x for x in score_list]
+
+    # 全部相同则得分
+    if all(x == num for x in change_list):
+        return num
+
+    return 0
+
+
+def get_line_score(score_list: list) -> int:
+    # 得到一行分数，score_list为该行
+
     # num为得到第一个非癞子
     num = -1
     for i in score_list:
@@ -74,9 +98,14 @@ def get_line_score(score_list: list, length: int) -> int:
 
     # 全部相同则得分
     if all(x == num for x in change_list):
-        return num * length
+        return num
 
     return 0
+
+
+def get_line_score_all(score_list: list, length: int) -> int:
+    # 得到一行分数，score_list为该行，length为有效长度
+    return get_line_score(score_list)*length
 
 
 all_cards = []
@@ -145,17 +174,17 @@ class Board:
             mx = max(x, y)
             score_list0 = [self.matrix[x + k][y + k].num[0]
                            for k in range(5 - mx)]
-            score += get_line_score(score_list0, 5 - mx)
+            score += get_line_score_all(score_list0, 5 - mx)
 
         # 往下
         for y in range(5):
             score_list1 = [self.matrix[k][y].num[1] for k in range(5)]
-            score += get_line_score(score_list1, 5 - abs(y - 2))
+            score += get_line_score_all(score_list1, 5 - abs(y - 2))
 
         # 往右
         for x in range(5):
             score_list2 = [self.matrix[x][k].num[2] for k in range(5)]
-            score += get_line_score(score_list2, 5 - abs(x - 2))
+            score += get_line_score_all(score_list2, 5 - abs(x - 2))
 
         score += self.bin.get_score()
 
@@ -170,21 +199,21 @@ class Board:
             mx = max(x, y)
             score_list0 = [self.matrix[x + k][y + k].num[0]
                            for k in range(5 - mx)]
-            if get_line_score(score_list0, 5 - mx):
+            if get_line_score(score_list0):
                 for k in range(9 - mx):
                     walls[x + k][y + k][0] = 1
 
         # 往下
         for y in range(5):
             score_list1 = [self.matrix[k][y].num[1] for k in range(5)]
-            if get_line_score(score_list1, 5 - abs(y - 2)):
+            if get_line_score(score_list1):
                 for k in range(9):
                     walls[k][y + 2][1] = 1
 
         # 往右
         for x in range(5):
             score_list2 = [self.matrix[x][k].num[2] for k in range(5)]
-            if get_line_score(score_list2, 5 - abs(x - 2)):
+            if get_line_score(score_list2):
                 for k in range(9):
                     walls[x + 2][k][2] = 1
 

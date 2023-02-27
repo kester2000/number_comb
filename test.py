@@ -1,5 +1,6 @@
+import torch
+import numpy as np
 from board import *
-
 
 # card_list = [
 #     Piece(3, 9, 6),
@@ -51,7 +52,11 @@ from board import *
 # c2 = Card(-1, -1, -1)
 # print(c1 == c2)
 
-cards = Board.get_random_cards()
-print(len(cards))
-for card in cards:
-    print(card)
+# cards = Board.get_random_cards()
+# print(len(cards))
+# for card in cards:
+#     print(card)
+
+state = []
+state.extend([1 if 1 > 0 else 0] * 10)
+print(state)
