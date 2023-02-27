@@ -20,8 +20,10 @@ except FileNotFoundError:
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(q_network.parameters(), lr=LEARNING_RATE)
 
+episode = 0
 # Run the SARSA algorithm
-for episode in range(1000000):
+while True:
+    episode += 1
     # Initialize the state and action
     board = Board()
     seed = str(time.time())
@@ -54,10 +56,10 @@ for episode in range(1000000):
         action = next_action
 
     # Print the total score for the episode
-    if board.get_score() > 100 or (episode+1) % 100 == 0:
-        print(f"Episode {episode+1}: Score {board.get_score()} seed {seed}")
+    if board.get_score() > 100 or episode % 100 == 0:
+        print(f"Episode {episode}: Score {board.get_score()} seed {seed}")
 
-    if (episode+1) % 100 == 0:
+    if episode % 100 == 0:
         with open('q_network_params.pkl', 'wb') as f:
             pickle.dump(q_network.state_dict(), f)
 
