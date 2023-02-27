@@ -50,7 +50,7 @@ while True:
             next_q_value = next_q_values[next_action]
             target_q_value = reward + GAMMA * next_q_value
         else:
-            target_q_value = torch.tensor(reward)
+            target_q_value = torch.tensor(reward).float().to(device)
         loss = criterion(q_value, target_q_value)
         optimizer.zero_grad()
         loss.backward()
