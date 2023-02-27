@@ -9,10 +9,12 @@ LEARNING_RATE = 0.001
 # Create an instance of the QNetwork class
 q_network = QNetwork()
 q_network.to(device)
+episode = 0
 try:
     with open('q_network_params.pkl', 'rb') as f:
-        saved_params = pickle.load(f)
+        saved_params, episode = pickle.load(f)
         q_network.load_state_dict(saved_params)
+        print(f'coninue in episode {episode}')
 except FileNotFoundError:
     pass
 
@@ -20,7 +22,6 @@ except FileNotFoundError:
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(q_network.parameters(), lr=LEARNING_RATE)
 
-episode = 0
 # Run the SARSA algorithm
 while True:
     episode += 1
@@ -56,10 +57,10 @@ while True:
         state = next_state
         action = next_action
 
+    if episode % 100 == 0:
+        with open('q_network_params.pkl', 'wb') as f:
+            pickle.dump((q_network.state_dict(), episode), f)
+
     # Print the total score for the episode
     if board.get_score() > 100 or episode % 100 == 0:
         print(f"Episode {episode}: Score {board.get_score()} seed {seed}")
-
-    if episode % 100 == 0:
-        with open('q_network_params.pkl', 'wb') as f:
-            pickle.dump(q_network.state_dict(), f)
