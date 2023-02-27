@@ -34,19 +34,23 @@ while True:
     q_values = q_network(state)
     action = epsilon_greedy(q_values, board.get_actions(), EPSILON)
     # Repeat until the end of the game
-    while action:
+    while True:
         # Execute the action and observe the next state and reward
         board.do_move(cards[0], action)
         cards.pop(0)
         reward = get_reward(board)
         q_values = q_network(state)
         q_value = q_values[action]
-        next_state = get_state(board, cards[0])
-        next_q_values = q_network(next_state)
-        next_action = epsilon_greedy(
-            next_q_values, board.get_actions(), EPSILON) if board.get_actions() else None
-        next_q_value = next_q_values[next_action] if next_action else None
-        target_q_value = reward + GAMMA * next_q_value if next_q_value else reward
+        if len(cards) > 0:
+            next_state = get_state(board, cards[0])
+            next_q_values = q_network(next_state)
+            next_action = epsilon_greedy(
+                next_q_values, board.get_actions(), EPSILON) if board.get_actions() else None
+            next_q_value = next_q_values[next_action] if 0 <= next_action <= 19 else None
+            target_q_value = (
+                reward + GAMMA * next_q_value) if next_q_value else reward
+        else:
+            target_q_value = torch.tensor(reward)
         loss = criterion(q_value, target_q_value)
         optimizer.zero_grad()
         loss.backward()
@@ -54,6 +58,9 @@ while True:
         # Transition to the next state and action
         state = next_state
         action = next_action
+
+        if len(cards) == 0:
+            break
 
     if episode % 100 == 0:
         with open('q_network_params.pkl', 'wb') as f:
