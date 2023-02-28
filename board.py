@@ -307,7 +307,7 @@ class Board:
         if any(card.is_wild() for card in cards[:20]):
             return cards[:20]
         else:
-            return cards[:20]
+            return cards[20:40]
 
 # # 1  4  8  *  *
 # # 2  5  9  13 *

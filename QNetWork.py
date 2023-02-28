@@ -1,3 +1,4 @@
+from copy import deepcopy
 import torch
 import torch.nn as nn
 import numpy as np
@@ -11,85 +12,54 @@ device = torch.device('cpu')
 class QNetwork(nn.Module):
     def __init__(self):
         super(QNetwork, self).__init__()
-        self.fc1 = nn.Linear(285, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 32)
-        self.fc4 = nn.Linear(32, 20)
+        self.fc1 = nn.Linear(83, 64)
+        self.fc2 = nn.Linear(64, 16)
+        self.fc3 = nn.Linear(16, 1)
 
     def forward(self, state):
         x = torch.relu(self.fc1(state))
         x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
-        q_values = self.fc4(x)
-        return q_values
+        q_value = self.fc3(x)
+        return q_value
 
 
 def epsilon_greedy(q_values, actions, epsilon):
-    # Define the epsilon-greedy policy
     if random.random() < epsilon:
-        # Choose a random action
         action = random.choice(actions)
     else:
-        # Choose the best action based on the Q-values
-        values = [q_values[a] for a in actions]
+        values = q_values
         max_value = max(values)
         count = values.count(max_value)
         if count > 1:
-            # Choose a random action among the best ones
-            best_actions = [a for a in actions if q_values[a] == max_value]
+            best_actions = [action for value, action in zip(
+                values, actions) if value == max_value]
             action = random.choice(best_actions)
         else:
             action = actions[values.index(max_value)]
     return action
 
 
-def get_state(board: Board, card: Card):
-    state = []
+def get_tensor(board, card, action):
+    tensor = []
+
+    for i in board.bin.num:
+        tensor.append(i)
 
     # 19 card
     for i in range(1, 20):
         x, y = move_to_location(i)
         for j in range(3):
-            state.append(board.matrix[x][y].num[j])
-
-    scores = []
-    potentials = []
-
-    # 往右下
-    for x, y in [[0, 2], [0, 1], [0, 0], [1, 0], [2, 0]]:
-        mx = max(x, y)
-        score_list0 = [board.matrix[x + k][y + k].num[0]
-                       for k in range(5 - mx)]
-        scores.append(get_line_score(score_list0))
-        potentials.append(get_line_potential(score_list0))
-
-    # 往下
-    for y in range(5):
-        score_list1 = [board.matrix[k][y].num[1] for k in range(5)]
-        scores.append(get_line_score(score_list1))
-        potentials.append(get_line_potential(score_list1))
-
-    # 往右
-    for x in range(5):
-        score_list2 = [board.matrix[x][k].num[2] for k in range(5)]
-        scores.append(get_line_score(score_list2))
-        potentials.append(get_line_potential(score_list2))
-
-    for i, score in enumerate(scores):
-        state.extend([score] * (5 - abs(i % 5 - 2)))
-
-    for i, potentials in enumerate(potentials):
-        state.extend([potentials] * (5 - abs(i % 5 - 2)))
-
-    for i in board.bin.num:
-        state.extend([i] * 19)
+            tensor.append(board.matrix[x][y].num[j])
 
     for i in card.num:
-        state.extend([i] * 19)
+        tensor.append(i)
 
-    state_tensor = torch.tensor(state).float().to(device)
-    return state_tensor
+    tensor.extend([1 if i == action else 0 for i in range(20)])
+
+    return torch.tensor(tensor).float().to(device)
 
 
-def get_reward(board: Board):
-    return board.get_score() + (board.get_potential() - board.get_score() + board.bin.get_score()) * 0.2 + (15 if board.bin.is_empty() else 0)
+def get_reward(board: Board, card: Card, action):
+    board2 = deepcopy(board)
+    board2.do_move(card, action)
+    return (board2.get_score() - board2.get_potential() / 3) - (board.get_score() - board.get_potential() / 3)
