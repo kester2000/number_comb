@@ -1,4 +1,6 @@
+from copy import deepcopy
 import torch
+import itertools
 import numpy as np
 from board import *
 
@@ -59,8 +61,30 @@ from board import *
 
 # print(sum(card.get_score() for card in all_cards)/len(all_cards))
 
-board = Board()
-card = Card(8, 9, 7)
-board.do_move(card, 1)
-board.show()
-print(board.get_potential())
+# board = Board()
+# card = Card(8, 9, 7)
+# board.do_move(card, 1)
+# board.show()
+# print(board.get_potential())
+
+id = [list(it) for it in itertools.combinations(range(56), 2)]
+l = []
+for i in id:
+    a = [0]*56
+    a[i[0]] = 1
+    a[i[1]] = 1
+    if i[0] < 20:
+        l.append(a[:20])
+    else:
+        l.append(a[20:40])
+
+for k in range(20):
+    cnt = 0
+    tot = 0
+    for ll in l:
+        s = sum(ll[i] for i in range(k))
+        if s == 1:
+            tot += 1
+            if ll[k] == 1:
+                cnt += 1
+    print(k, cnt, tot)

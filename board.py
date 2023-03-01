@@ -299,10 +299,7 @@ class Board:
         return cards
 
     def get_random_cards():
-        cards = []
-        for card in all_cards:
-            cards.append(card)
-            cards.append(card)
+        cards = all_cards * 2
         random.shuffle(cards)
         if any(card.is_wild() for card in cards[:20]):
             return cards[:20]
