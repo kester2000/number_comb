@@ -1,63 +1,133 @@
-from time import time
-from math import log, sqrt
-from copy import deepcopy
 from board import *
-
-C_PUCT = 2
-
-
-def get_random_card(board: Board):
-    cards = []
-    if not board.bin.is_empty():
-        cards.append(board.bin)
-    for i in range(1, 20):
-        x, y = move_to_location(i)
-        if not board.matrix[x][y].is_empty():
-            cards.append(board.matrix[x][y])
-    cnt = len(cards)
-    wild_cnt = sum(1 if card.is_wild() else 0 for card in cards)
-    if wild_cnt == 0:
-        if random.random() * (cnt - 91 * cnt + 1540) < (90 - 2 * cnt):
-            return Card(-1, -1, -1)
-    elif wild_cnt == 0:
-        if random.random() * (46 - cnt) > 1:
-            return Card(-1, -1, -1)
-    rest_cards = all_cards[:-1] * 2
-    for card in cards:
-        if not card.is_wild():
-            rest_cards.remove(card)
-    return random.choice(rest_cards)
+import numpy as np
+import copy
 
 
-def get_action_by_potential(board: Board, card: Card):
-    actions = board.get_actions()
-    scores = []
-    for action in actions:
-        board0 = deepcopy(board)
-        board0.do_move(card, action)
-        scores.append(board0.get_potential())
-    max_value = max(scores)
-    return actions[scores.index(max_value)]
+def softmax(x):
+    probs = np.exp(x - np.max(x))
+    probs /= np.sum(probs)
+    return probs
 
 
-def get_mcts_action(board: Board, card: Card, cal_time=5):
-    actions_mp = {action: [0, 0] for action in board.get_actions()}
-    time0 = time()
-    while time()-time0 < cal_time:
-        log_sum = sum(actions_mp[a][1] for a in board.get_actions())
-        log_sum = log(log_sum) + 1 if log_sum > 0 else 1
-        action = random.choices(board.get_actions(), [(actions_mp[a][0] / actions_mp[a][1] if actions_mp[a]
-                                                      [1] > 0 else 0) + C_PUCT * sqrt(log_sum / (actions_mp[a][1] + 1)) for a in board.get_actions()])[0]
-        board0 = deepcopy(board)
-        board0.do_move(card, action)
-        while board0.get_actions():
-            next_card = get_random_card(board0)
-            next_action = get_action_by_potential(board0, next_card)
-            board0.do_move(next_card, next_action)
-        actions_mp[action][0] += board0.get_score()
-        actions_mp[action][1] += 1
-    log_sum = sum(actions_mp[a][1] for a in board.get_actions())
-    log_sum = log(log_sum) + 1 if log_sum > 0 else 1
-    action = random.choices(board.get_actions(), [(actions_mp[a][0] / actions_mp[a][1] if actions_mp[a]
-                            [1] > 0 else 0) + C_PUCT * sqrt(log_sum / (actions_mp[a][1] + 1)) for a in board.get_actions()])[0]
-    return action
+class TreeNode(object):
+    def __init__(self, parent, prior_p):
+        self._parent = parent
+        self._children = {}
+        self._n_visits = 0
+        self._Q = 0
+        self._u = 0
+        self._P = prior_p
+
+    def expand(self, action_priors):
+        for action, prob in action_priors:
+            if action not in self._children:
+                self._children[action] = TreeNode(self, prob)
+
+    def select(self, c_puct):
+        return max(self._children.items(),
+                   key=lambda act_node: act_node[1].get_value(c_puct))
+
+    def update(self, leaf_value):
+        self._n_visits += 1
+        self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
+
+    def update_recursive(self, leaf_value):
+        if self._parent:
+            self._parent.update_recursive(leaf_value)
+        self.update(leaf_value)
+
+    def get_value(self, c_puct):
+        self._u = (c_puct * self._P *
+                   np.sqrt(self._parent._n_visits) / (1 + self._n_visits))
+        return self._Q + self._u
+
+    def is_leaf(self):
+        return self._children == {}
+
+    def is_root(self):
+        return self._parent is None
+
+
+class MCTS(object):
+    def __init__(self, policy_value_fn, c_puct=5, n_playout=2000):
+        self._root = TreeNode(None, 1.0)
+        self._policy = policy_value_fn
+        self._c_puct = c_puct
+        self._n_playout = n_playout
+
+    def _playout(self, board: Board, card: Card):
+        node = self._root
+        while (1):
+            if node.is_leaf():
+                break
+            action, node = node.select(self._c_puct)
+            board.do_move(card, action)
+            card = board.get_random_card()
+
+        if board.get_actions():
+            action_probs, leaf_value = self._policy(board, card)
+            node.expand(action_probs)
+        else:
+            leaf_value = board.get_score()
+
+        # Update value and visit count of nodes in this traversal.
+        node.update_recursive(leaf_value)
+
+    def get_move_probs(self, board: Board, card: Card, temp=1e-3):
+        for n in range(self._n_playout):
+            board_copy = copy.deepcopy(board)
+            self._playout(board_copy, card)
+
+        act_visits = [(act, node._n_visits)
+                      for act, node in self._root._children.items()]
+        acts, visits = zip(*act_visits)
+        act_probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
+
+        return acts, act_probs
+
+    def update_with_move(self, last_move):
+        if last_move in self._root._children:
+            self._root = self._root._children[last_move]
+            self._root._parent = None
+        else:
+            self._root = TreeNode(None, 1.0)
+
+    def __str__(self):
+        return "MCTS"
+
+
+class MCTSPlayer(object):
+    def __init__(self, policy_value_function,
+                 c_puct=5, n_playout=2000, is_selfplay=0):
+        self.mcts = MCTS(policy_value_function, c_puct, n_playout)
+        self._is_selfplay = is_selfplay
+
+    def get_action(self, board, card, temp=1e-3, retrun_probs=0):
+        if board.get_actions():
+            acts, probs = self.mcts.get_move_probs(board, card, temp)
+            ret_probs = [0]*20
+            for a, p in zip(acts, probs):
+                ret_probs[a] = p
+            if self._is_selfplay:
+                # add Dirichlet Noise for exploration (needed for
+                # self-play training)
+                move = np.random.choice(
+                    acts,
+                    p=0.75*probs + 0.25 *
+                    np.random.dirichlet(0.3*np.ones(len(probs)))
+                )
+            else:
+                # with the default temp=1e-3, it is almost equivalent
+                # to choosing the move with the highest prob
+                move = np.random.choice(acts, p=probs)
+            # reset the root node
+            self.mcts.update_with_move(-1)
+            if retrun_probs:
+                return move, ret_probs
+            else:
+                return move
+        else:
+            print("WARNING: the board is full")
+
+    def __str__(self):
+        return "MCTS {}".format(self.player)

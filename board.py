@@ -1,5 +1,6 @@
 import random
 import subprocess
+import numpy as np
 from PIL import Image, ImageDraw
 
 MP = [[1, 4, 8, -1, -1], [2, 5, 9, 13, -1], [3, 6, 10, 14, 17],
@@ -298,6 +299,28 @@ class Board:
             cards.append(Card(temp[0], temp[1], temp[2]))
         return cards
 
+    def get_random_card(self):
+        cards = []
+        if not self.bin.is_empty():
+            cards.append(self.bin)
+        for i in range(1, 20):
+            x, y = move_to_location(i)
+            if not self.matrix[x][y].is_empty():
+                cards.append(self.matrix[x][y])
+        cnt = len(cards)
+        wild_cnt = sum(1 if card.is_wild() else 0 for card in cards)
+        if wild_cnt == 0:
+            if random.random() * (cnt - 91 * cnt + 1540) < (90 - 2 * cnt):
+                return Card(-1, -1, -1)
+        elif wild_cnt == 0:
+            if random.random() * (46 - cnt) > 1:
+                return Card(-1, -1, -1)
+        rest_cards = all_cards[:-1] * 2
+        for card in cards:
+            if not card.is_wild():
+                rest_cards.remove(card)
+        return random.choice(rest_cards)
+
     def get_random_cards():
         cards = all_cards * 2
         random.shuffle(cards)
@@ -305,6 +328,16 @@ class Board:
             return cards[:20]
         else:
             return cards[20:40]
+
+    def get_state(self, next_card):
+        cards = [self.bin]
+        for i in range(1, 20):
+            x, y = move_to_location(i)
+            cards.append(self.matrix[x][y])
+        cards.append(next_card)
+        state = [card.num[i] for i in range(3) for card in cards]
+        # return np.array(state)
+        return state
 
 # # 1  4  8  *  *
 # # 2  5  9  13 *
